@@ -1,7 +1,12 @@
 import './App.css';
-import { Button, createTheme, MantineProvider } from '@mantine/core';
+import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
+import { createTheme, MantineProvider } from '@mantine/core';
 import '@mantine/core/styles.css';
 import AppRoutes from './Routes/AppRoutes';
+import { Notifications } from '@mantine/notifications';
+import { Provider } from 'react-redux';
+import Store from './Store';
 
 
 const theme = createTheme({
@@ -29,10 +34,13 @@ const theme = createTheme({
 
 function App() {
   return (
+    <Provider store={Store}>
     <MantineProvider theme={theme}>
+      <Notifications position='top-center' />
       {/* Your app here */}
       <AppRoutes/>
     </MantineProvider>
+    </Provider>
   );
 }
 
