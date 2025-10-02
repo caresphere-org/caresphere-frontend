@@ -1,11 +1,21 @@
 import { Button, PasswordInput, TextInput } from '@mantine/core'
 import { IconClockHeart } from '@tabler/icons-react'
 import { useForm } from '@mantine/form';
-import React from 'react'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import UserService from '../Service/UserService';
+import { errorNotification, successNotification } from '../Utility/NotificationUtil';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { setJwt } from '../Slices/JwtSlice';
+import { jwtDecode } from 'jwt-decode';
+import { setUser } from '../Slices/UserSlice';
 
 
 const LoginPage = () => {
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
 
     const form = useForm({
     
@@ -21,7 +31,22 @@ const LoginPage = () => {
       });
 
       const handleSubmit = (values: typeof form.values) => {
-        console.log(values);
+        setLoading(true);
+
+        UserService.loginUser(values)
+          .then((_data) => {
+            successNotification("Logged in successfully.");
+            dispatch(setJwt(_data))
+            dispatch(setUser(jwtDecode(_data)));
+            // navigate('/dashboard');
+          }).catch((error) => {
+            console.error("Login Error details: ", error);
+            if (error.response?.status === 500) {
+              errorNotification("Server Error: The API is currently encountering an issue (HTTP 500). Please check backend logs.");
+              return; 
+            }
+              errorNotification(error?.response?.data?.errorMessage || "Login failed. Please check your credentials or network connection.")
+          }).finally(() => setLoading(false))
       };
 
 
@@ -67,7 +92,14 @@ const LoginPage = () => {
             />
 
             {/* --- Actions --- */}
-            <Button radius="md" size='md' type='submit' color='pink'>Login</Button>
+            <Button 
+              loading={loading}
+              radius="md" 
+              size='md' 
+              type='submit' 
+              color='pink'>
+                Login
+            </Button>
 
             <div className='text-neutral-100 text-sm self-center'>Don't have an account? <Link to="/register" className='hover:underline hover:text-pink-300'>Register</Link></div>
         </form> 
