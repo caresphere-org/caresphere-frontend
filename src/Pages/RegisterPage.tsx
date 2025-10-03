@@ -14,7 +14,7 @@ const RegisterPage = () => {
 
   // Define the form type interface
   interface FormValues {
-      role: string;
+      roles: string;
       name: string;
       email: string;
       password: string;
@@ -28,7 +28,7 @@ const RegisterPage = () => {
       
           initialValues: {
             name: '',
-            role:"PATIENT",
+            roles:"PATIENT",
             email: '',
             password: '',
             confirmPassword: ''
@@ -86,14 +86,17 @@ return (
 
           {/* Roles */}
           <SegmentedControl 
-              {...form.getInputProps("type")}
+              {...form.getInputProps("roles")}
               fullWidth 
               size="md" 
               radius="md" 
               color='pink'
               bg="none"
               className='[&_*]:!text-white border border-white'
-              data={[{label:'Patient', value:'PATIENT'}, {label:'Doctor', value:'DOCTOR'},{label:'Admin', value:'ADMIN'}
+              data={[
+                {label:'Patient', value:'PATIENT'}, 
+                {label:'Doctor', value:'DOCTOR'},
+                {label:'Admin', value:'ADMIN'}
               ]} 
           />
 

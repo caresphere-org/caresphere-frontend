@@ -38,7 +38,7 @@ const LoginPage = () => {
             successNotification("Logged in successfully.");
             dispatch(setJwt(_data))
             dispatch(setUser(jwtDecode(_data)));
-            // navigate('/dashboard');
+
           }).catch((error) => {
             console.error("Login Error details: ", error);
             if (error.response?.status === 500) {

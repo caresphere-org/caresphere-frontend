@@ -1,18 +1,17 @@
-
+import Sidebar from '../Components/Patient/Sidebar/Sidebar'
 import Header from '../Components/Header/Header'
 import { Outlet } from 'react-router-dom'
 
-const AdminDashboard = () => {
+const PatientDashboard = () => {
   return (
     <div className='flex'>
-        {/* <Sidebar/> */}
+        <Sidebar/>
         <div className='w-full flex flex-col'>
             <Header/>
-              Admin dasboard
             <Outlet/>
         </div>
     </div>
   )
 }
 
-export default AdminDashboard
+export default PatientDashboard;
