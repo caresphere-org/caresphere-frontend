@@ -39,6 +39,21 @@ const LoginPage = () => {
             dispatch(setJwt(_data))
             dispatch(setUser(jwtDecode(_data)));
 
+            // // Decode the token to get user information
+            // const decodedUser = jwtDecode(_data);
+            // dispatch(setUser(decodedUser));
+
+            // // ADD THIS NAVIGATION LOGIC
+            // // Redirect based on user role
+            // if (decodedUser.role === 'doctor') {
+            //   navigate('/doctors/dashboard'); 
+            // } else if (decodedUser.role === 'patient') {
+            //   navigate('/patients/dashboard');
+            // } else {
+            //   // Default fallback
+            //   navigate('/dashboard');
+            // }
+
           }).catch((error) => {
             console.error("Login Error details: ", error);
             if (error.response?.status === 500) {

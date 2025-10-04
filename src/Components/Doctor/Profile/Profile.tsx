@@ -3,34 +3,33 @@ import { DateInput } from '@mantine/dates'
 import { IconEdit } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
-import { BLOOD_GROUPS } from '../../../Data/DropDownData'
 import { useDisclosure } from '@mantine/hooks'
+import { DOCTOR_DEPARTMENTS, DOCTOR_SPECIALIZATIONS } from '../../../Data/DropDownData'
 
 /**
- * Mock patient data object
- * Represents a patient's profile information with medical and personal details
- * TODO: Replace with actual API data integration from healthcare system
+ * Mock doctor data object
+ * Represents a doctor's profile information with all required fields
+ * TODO: Replace with actual API data integration
  */
-const patient: any = {
+const doctor: any = {
     name: "John Doe",
     email: "johndoe@example.com",
-    dob: "1990-05-15", // Date of birth in YYYY-MM-DD format
+    dob: "1990-05-15T00:00:00", // ISO format for LocalDateTime compatibility
     phone: "+91-3108501489",
     address: "123, Main Street, Mumbai, India",
-    aadharNo: "3804-3434-6453", // Indian identification number
-    bloodGroup: "O_NEGATIVE", // Blood group for medical emergencies
-    allergies: "Peanuts", // Known allergies for treatment safety
-    chronicDisease: "Diabetes" // Long-term health conditions
+    licenseNo: "MED-2020-384756", // Medical council license number
+    specialization: "Cardiology", 
+    department: "Cardiology Department", 
+    totalExperience: 8 // Years of professional experience
 }
 
 /**
- * Patient Profile Component
- * Displays and allows editing of patient's personal and medical information
+ * Doctor Profile Component
+ * Displays and allows editing of doctor's personal and professional information
  * Features:
- * - View mode: Display formatted patient information
- * - Edit mode: Form inputs for updating profile and medical data
+ * - View mode: Display formatted doctor information
+ * - Edit mode: Form inputs for updating profile data
  * - Profile picture upload functionality
- * - Medical information tracking (allergies, chronic diseases)
  */
 const Profile = () => {
     // =========================================================================
@@ -62,13 +61,12 @@ const Profile = () => {
 
     /**
      * Toggles edit mode and handles form submission
-     * TODO: Implement actual form submission logic with API call
+     * TODO: Implement actual form submission logic
      */
     const handleEditToggle = () => {
         if (editMode) {
-            // Submit logic would go here - save to backend
-            console.log('Submitting patient form data...');
-            // TODO: Add API call to update patient information
+            // Submit logic would go here
+            console.log('Submitting form data...');
         }
         setEditMode(!editMode);
     };
@@ -95,7 +93,7 @@ const Profile = () => {
                             variant="filled" 
                             src="/avatar.png" 
                             size={150} 
-                            alt="Patient profile picture" 
+                            alt="Doctor profile picture" 
                         />
                         {/* Show upload button only in edit mode */}
                         {editMode && (
@@ -147,13 +145,12 @@ const Profile = () => {
             <Divider my="xl" />
 
             {/* =================================================================
-                PERSONAL & MEDICAL INFORMATION SECTION
-                Displays patient's personal details and medical information
-                Critical for healthcare providers during treatment
+                PERSONAL INFORMATION SECTION
+                Displays doctor's professional and contact details in table format
             ================================================================== */}
             <div>
                 <div className='text-3xl font-medium mb-5 text-neutral-900'>
-                    Personal & Medical Information
+                    Professional Information
                 </div>
                 
                 <Table 
@@ -178,7 +175,7 @@ const Profile = () => {
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.dob}
+                                    {new Date(doctor.dob).toLocaleDateString()}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -200,7 +197,7 @@ const Profile = () => {
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.phone}
+                                    {doctor.phone}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -219,87 +216,92 @@ const Profile = () => {
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.address}
+                                    {doctor.address}
                                 </Table.Td>
                             )}
                         </Table.Tr>
 
-                        {/* Aadhar Number Row */}
+                        {/* License Number Row */}
                         <Table.Tr>
                             <Table.Td className='font-semibold text-xl'>
-                                Aadhar Number
+                                License Number
                             </Table.Td>
                             {editMode ? (
                                 <Table.Td className='text-xl'>
-                                    <NumberInput 
-                                        maxLength={12} 
-                                        clampBehavior='strict' 
-                                        placeholder='Enter Aadhar number' 
-                                        hideControls 
+                                    <TextInput 
+                                        placeholder='Enter medical license number'
                                         // TODO: Add value binding and validation
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.aadharNo}
+                                    {doctor.licenseNo}
                                 </Table.Td>
                             )}
                         </Table.Tr>
 
-                        {/* Blood Group Row - Critical Medical Information */}
+                        {/* Specialization Row */}
                         <Table.Tr>
                             <Table.Td className='font-semibold text-xl'>
-                                Blood Group
+                                Specialization
                             </Table.Td>
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <Select 
-                                        data={BLOOD_GROUPS} 
-                                        placeholder='Select blood group'
-                                        // TODO: Add value binding and change handler
+                                        data={DOCTOR_SPECIALIZATIONS} placeholder='Specialization'
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.bloodGroup}
+                                    {doctor.specialization}
                                 </Table.Td>
                             )}
                         </Table.Tr>
 
-                        {/* Allergies Row - Important for Treatment Safety */}
+                        {/* Department Row */}
                         <Table.Tr>
                             <Table.Td className='font-semibold text-xl'>
-                                Allergies
+                                Department
                             </Table.Td>
                             {editMode ? (
                                 <Table.Td className='text-xl'>
-                                    <TagsInput 
-                                        placeholder='Enter allergies separated by comma'
-                                        // TODO: Add value binding and change handler
+                                    <Select 
+                                        data={DOCTOR_DEPARTMENTS} placeholder='Department'
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.allergies || "None"}
+                                    {doctor.department}
                                 </Table.Td>
                             )}
                         </Table.Tr>
 
-                        {/* Chronic Diseases Row - Long-term Health Conditions */}
+                        {/* Total Experience Row */}
                         <Table.Tr>
                             <Table.Td className='font-semibold text-xl'>
-                                Chronic Diseases
+                                Total Experience
                             </Table.Td>
                             {editMode ? (
                                 <Table.Td className='text-xl'>
-                                    <TagsInput 
-                                        placeholder='Enter chronic diseases separated by comma'
-                                        // TODO: Add value binding and change handler
+                                    <NumberInput 
+                                        placeholder='Enter years of experience' 
+                                        min={0} 
+                                        max={50}
+                                        value={doctor.totalExperience}
+                                        onChange={(value) => {
+                                            // Update the doctor object with new experience value
+                                            const updatedDoctor = {
+                                                ...doctor,
+                                                totalExperience: Number(value) || 0
+                                            };
+                                            // TODO: Dispatch to Redux store or update state
+                                            console.log('Updated experience:', updatedDoctor.totalExperience);
+                                        }}
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.chronicDisease || "None"}
+                                    {doctor.totalExperience} years
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -321,18 +323,17 @@ const Profile = () => {
                     </span>
                 }
             >
-                {/* TODO: Implement file upload functionality for patient profile
-                <div className="p-4">
+                {/* TODO: Implement file upload functionality */}
+                {/* <div className="p-4">
                     <Text>
-                        Patient profile picture upload functionality to be implemented.
+                        Profile picture upload functionality to be implemented.
                     </Text>
                     {/* 
                     Suggested implementation:
                     - File input with drag & drop
-                    - Image preview and cropping
-                    - File size and format validation
+                    - Image preview
+                    - Crop functionality
                     - Upload progress indicator
-                    - Integration with patient records system
                     
                 </div> */}
             </Modal>
