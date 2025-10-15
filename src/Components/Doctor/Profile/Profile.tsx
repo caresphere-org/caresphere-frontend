@@ -1,86 +1,109 @@
 import { Avatar, Button, Divider, Modal, NumberInput, Select, Table, TagsInput, TextInput } from '@mantine/core'
 import { DateInput } from '@mantine/dates'
 import { IconEdit } from '@tabler/icons-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useDisclosure } from '@mantine/hooks'
 import { DOCTOR_DEPARTMENTS, DOCTOR_SPECIALIZATIONS } from '../../../Data/DropDownData'
+import { getDoctor, updateDoctor } from '../../../Service/DoctorProfileService'
+import { formatDate } from '../../../Utility/DateUtil'
+import { useForm } from '@mantine/form'
+import { errorNotification, successNotification } from '../../../Utility/NotificationUtil'
 
-/**
- * Mock doctor data object
- * Represents a doctor's profile information with all required fields
- * TODO: Replace with actual API data integration
- */
-const doctor: any = {
-    name: "John Doe",
-    email: "johndoe@example.com",
-    dob: "1990-05-15T00:00:00", // ISO format for LocalDateTime compatibility
-    phone: "+91-3108501489",
-    address: "123, Main Street, Mumbai, India",
-    licenseNo: "MED-2020-384756", // Medical council license number
-    specialization: "Cardiology", 
-    department: "Cardiology Department", 
-    totalExperience: 8 // Years of professional experience
-}
-
-/**
- * Doctor Profile Component
- * Displays and allows editing of doctor's personal and professional information
- * Features:
- * - View mode: Display formatted doctor information
- * - Edit mode: Form inputs for updating profile data
- * - Profile picture upload functionality
- */
 const Profile = () => {
-    // =========================================================================
-    // STATE MANAGEMENT & HOOKS
-    // =========================================================================
-
-    /**
-     * Current authenticated user data from Redux store
-     * Used for header display (name, email, profile picture)
-     */
     const user = useSelector((state: any) => state.user);
-
-    /**
-     * Toggle between view and edit modes
-     * - false: Display mode (read-only)
-     * - true: Edit mode (form inputs enabled)
-     */
     const [editMode, setEditMode] = useState<boolean>(false);
-
-    /**
-     * Modal state management for profile picture upload
-     * Controls visibility of the upload profile picture modal
-     */
     const [opened, { open, close }] = useDisclosure(false);
+    const [profile, setProfile] = useState<any>({});
+
+    const form = useForm({
+        mode: 'uncontrolled',
+        initialValues: {
+            dob: '' as string | Date, // Fix: Allow both string and Date types
+            phone: '',
+            address: '',
+            licenseNo: '',
+            specialization: '',
+            department: '',
+            totalExperience: 0
+        },
+    
+        validate: {
+          dob: (value: any) => !value ? 'Date of Birth is required' : undefined,
+          phone: (value: any) => !value ? 'Phone is required' : undefined,
+          address: (value: any) => !value ? 'Address is required' : undefined,
+          licenseNo: (value: any) => !value ? 'License number is required' : undefined,
+        },
+    });
+
+    useEffect(() => {
+        console.log('🔍 useEffect triggered - User:', user, 'ProfileId:', user?.profileId);
+        
+        if (user?.profileId) {
+            console.log('🚀 Calling getDoctor with ID:', user.profileId);
+            getDoctor(user.profileId).then((data) => {
+                setProfile(data);
+                // Set form values when profile data is loaded
+                form.setValues({
+                    dob: data.dob ? new Date(data.dob) : '',
+                    phone: data.phone || '',
+                    address: data.address || '',
+                    licenseNo: data.licenseNo || '',
+                    specialization: data.specialization || '',
+                    department: data.department || '',
+                    totalExperience: data.totalExperience || 0 // Fix: Changed from 'experience' to 'totalExperience'
+                });
+            }).catch((error) => {
+                console.log('❌ Error:', error.response?.data || error.message);
+            })
+        }
+    }, [user]);
 
     // =========================================================================
     // EVENT HANDLERS
     // =========================================================================
 
-    /**
-     * Toggles edit mode and handles form submission
-     * TODO: Implement actual form submission logic
-     */
-    const handleEditToggle = () => {
-        if (editMode) {
-            // Submit logic would go here
-            console.log('Submitting form data...');
+    const handleSubmit = (values: any) => {
+        const validation = form.validate();
+        if (validation.hasErrors) {
+            errorNotification("Please fix the form errors before submitting");
+            return;
         }
-        setEditMode(!editMode);
-    };
+    
+        updateDoctor({...profile, ...values}).then((data) =>{
+            successNotification("Profile updated successfully!")
+            setProfile(data);
+            setEditMode(false);
+        }).catch((error) => {
+            console.error('Update failed:', error);
+            if (error.response?.status === 401) {
+                errorNotification("Session expired. Please login again.");
+            // Optional: Redirect to login
+            // localStorage.removeItem('token');
+            // window.location.href = '/login';
+            } else {
+                errorNotification(error.response?.data?.error || error.response?.data?.errorMessage || "Update failed");
+            }    
+        })
+    }
 
     // =========================================================================
     // COMPONENT RENDER
     // =========================================================================
 
     return (
-        <div className='p-10'>
+        <form 
+            className='p-10' 
+            onSubmit={(e) => {
+                e.preventDefault();
+                if (editMode) {
+                    handleSubmit(form.getValues());
+                }
+            }}
+        >
             
             {/* =================================================================
                 PROFILE HEADER SECTION
-                Contains profile picture, user info, and edit controls
             ================================================================== */}
             <div className='flex justify-between items-center'>
                 
@@ -95,7 +118,6 @@ const Profile = () => {
                             size={150} 
                             alt="Doctor profile picture" 
                         />
-                        {/* Show upload button only in edit mode */}
                         {editMode && (
                             <Button 
                                 size='sm' 
@@ -123,7 +145,19 @@ const Profile = () => {
                     // Edit Button - Switches to edit mode
                     <Button 
                         size='lg' 
-                        onClick={handleEditToggle}
+                        onClick={() => {
+                            setEditMode(true);
+                            // Populate form with current profile data when entering edit mode
+                            form.setValues({
+                                dob: profile.dob ? new Date(profile.dob) : '',
+                                phone: profile.phone || '',
+                                address: profile.address || '',
+                                licenseNo: profile.licenseNo || '',
+                                specialization: profile.specialization || '',
+                                department: profile.department || '',
+                                totalExperience: profile.totalExperience || 0
+                            });
+                        }}
                         variant="filled" 
                         leftSection={<IconEdit />}
                     >
@@ -132,11 +166,14 @@ const Profile = () => {
                 ) : (
                     // Submit Button - Saves changes and returns to view mode
                     <Button 
+                        onClick={(e) => {
+                            e.preventDefault();
+                            handleSubmit(form.getValues());
+                        }}
                         size='lg' 
-                        onClick={handleEditToggle}
                         variant="filled"
                     >
-                        Save Changes
+                        Submit
                     </Button>
                 )}
             </div>
@@ -146,7 +183,6 @@ const Profile = () => {
 
             {/* =================================================================
                 PERSONAL INFORMATION SECTION
-                Displays doctor's professional and contact details in table format
             ================================================================== */}
             <div>
                 <div className='text-3xl font-medium mb-5 text-neutral-900'>
@@ -169,13 +205,13 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <DateInput
+                                        {...form.getInputProps("dob")}
                                         placeholder="Select date of birth"
-                                        // TODO: Add value binding and change handler
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {new Date(doctor.dob).toLocaleDateString()}
+                                    {formatDate(profile.dob) ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -188,16 +224,16 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <NumberInput 
+                                        {...form.getInputProps("phone")}
                                         maxLength={10} 
                                         clampBehavior='strict' 
                                         placeholder='Enter phone number' 
                                         hideControls 
-                                        // TODO: Add value binding and validation
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {doctor.phone}
+                                    {profile.phone ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -210,13 +246,13 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <TextInput
+                                        {...form.getInputProps("address")}
                                         placeholder="Enter complete address"
-                                        // TODO: Add value binding and change handler
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {doctor.address}
+                                    {profile.address ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -229,13 +265,13 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <TextInput 
+                                        {...form.getInputProps("licenseNo")}
                                         placeholder='Enter medical license number'
-                                        // TODO: Add value binding and validation
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {doctor.licenseNo}
+                                    {profile.licenseNo ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -248,12 +284,14 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <Select 
-                                        data={DOCTOR_SPECIALIZATIONS} placeholder='Specialization'
+                                        {...form.getInputProps("specialization")}
+                                        data={DOCTOR_SPECIALIZATIONS} 
+                                        placeholder='Specialization'
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {doctor.specialization}
+                                    {profile.specialization ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -266,12 +304,14 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <Select 
-                                        data={DOCTOR_DEPARTMENTS} placeholder='Department'
+                                        {...form.getInputProps("department")}
+                                        data={DOCTOR_DEPARTMENTS} 
+                                        placeholder='Department'
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {doctor.department}
+                                    {profile.department ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -284,24 +324,15 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <NumberInput 
+                                        {...form.getInputProps("totalExperience")} 
                                         placeholder='Enter years of experience' 
                                         min={0} 
                                         max={50}
-                                        value={doctor.totalExperience}
-                                        onChange={(value) => {
-                                            // Update the doctor object with new experience value
-                                            const updatedDoctor = {
-                                                ...doctor,
-                                                totalExperience: Number(value) || 0
-                                            };
-                                            // TODO: Dispatch to Redux store or update state
-                                            console.log('Updated experience:', updatedDoctor.totalExperience);
-                                        }}
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {doctor.totalExperience} years
+                                    {profile.totalExperience ?? '-'} years
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -311,7 +342,6 @@ const Profile = () => {
 
             {/* =================================================================
                 PROFILE PICTURE UPLOAD MODAL
-                Handles profile picture upload functionality
             ================================================================== */}
             <Modal 
                 centered 
@@ -324,20 +354,9 @@ const Profile = () => {
                 }
             >
                 {/* TODO: Implement file upload functionality */}
-                {/* <div className="p-4">
-                    <Text>
-                        Profile picture upload functionality to be implemented.
-                    </Text>
-                    {/* 
-                    Suggested implementation:
-                    - File input with drag & drop
-                    - Image preview
-                    - Crop functionality
-                    - Upload progress indicator
-                    
-                </div> */}
             </Modal>
-        </div>
+       
+        </form>
     );
 };
 

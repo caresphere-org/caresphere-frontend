@@ -1,10 +1,13 @@
 import { Avatar, Button, Divider, Modal, NumberInput, Select, Table, TagsInput, TextInput } from '@mantine/core'
 import { DateInput } from '@mantine/dates'
 import { IconEdit } from '@tabler/icons-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { BLOOD_GROUPS } from '../../../Data/DropDownData'
 import { useDisclosure } from '@mantine/hooks'
+import { getPatient } from '../../../Service/PatientProfileService'
+import { formatDate } from '../../../Utility/DateUtil'
+import { useForm } from '@mantine/form'
 
 /**
  * Mock patient data object
@@ -56,6 +59,36 @@ const Profile = () => {
      */
     const [opened, { open, close }] = useDisclosure(false);
 
+    const [profile, setProfile] = useState<any>({});
+
+    const form = useForm({
+            mode: 'uncontrolled',
+            initialValues: {
+              dob: profile.dob,
+              phone: profile.phone,
+              address: profile.address,
+              aadharNo: profile.aadharNo,
+              bloodGroup: profile.bloodGroup,
+              allergies: profile.allergies,
+              chronicDisease: profile.chronicDisease
+            },
+        
+            validate: {
+                dob: (value: any) => !value ? 'Date of Birth is required' : undefined,
+                phone: (value: any) => !value ? 'Phone is required' : undefined,
+                address: (value: any) => !value ? 'Address is required' : undefined,
+                aadharNo: (value: any) => !value ? 'Aadhar number is required' : undefined,
+            },
+          });
+
+    useEffect(() => {
+        getPatient((user.profileId)).then((data) => {
+            setProfile(data);
+        }).catch((error) => {
+            console.log(error); 
+        })
+    }, [])
+
     // =========================================================================
     // EVENT HANDLERS
     // =========================================================================
@@ -73,12 +106,16 @@ const Profile = () => {
         setEditMode(!editMode);
     };
 
+    const handleSubmit = (values: any) => {
+        console.log(values); 
+    }
+
     // =========================================================================
     // COMPONENT RENDER
     // =========================================================================
 
     return (
-        <div className='p-10'>
+        <form onSubmit={form.onSubmit(handleSubmit)} className='p-10'>
             
             {/* =================================================================
                 PROFILE HEADER SECTION
@@ -135,10 +172,10 @@ const Profile = () => {
                     // Submit Button - Saves changes and returns to view mode
                     <Button 
                         size='lg' 
-                        onClick={handleEditToggle}
+                        type='submit'
                         variant="filled"
                     >
-                        Save Changes
+                        Submit
                     </Button>
                 )}
             </div>
@@ -172,13 +209,14 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <DateInput
+                                        {...form.getInputProps("dob")}
                                         placeholder="Select date of birth"
                                         // TODO: Add value binding and change handler
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.dob}
+                                    {formatDate(profile.dob) ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -191,6 +229,7 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <NumberInput 
+                                        {...form.getInputProps("phone")}
                                         maxLength={10} 
                                         clampBehavior='strict' 
                                         placeholder='Enter phone number' 
@@ -200,7 +239,7 @@ const Profile = () => {
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.phone}
+                                    {profile.phone ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -213,13 +252,14 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <TextInput
+                                        {...form.getInputProps("address")}
                                         placeholder="Enter complete address"
                                         // TODO: Add value binding and change handler
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.address}
+                                    {profile.address ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -232,6 +272,7 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <NumberInput 
+                                        {...form.getInputProps("aadharNo")}
                                         maxLength={12} 
                                         clampBehavior='strict' 
                                         placeholder='Enter Aadhar number' 
@@ -241,7 +282,7 @@ const Profile = () => {
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.aadharNo}
+                                    {profile.aadharNo ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -254,6 +295,7 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <Select 
+                                        {...form.getInputProps("bloodGroup")}
                                         data={BLOOD_GROUPS} 
                                         placeholder='Select blood group'
                                         // TODO: Add value binding and change handler
@@ -261,7 +303,7 @@ const Profile = () => {
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.bloodGroup}
+                                    {profile.bloodGroup ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -274,13 +316,14 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <TagsInput 
+                                        {...form.getInputProps("allergies")}
                                         placeholder='Enter allergies separated by comma'
                                         // TODO: Add value binding and change handler
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.allergies || "None"}
+                                    {profile.allergies ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -293,13 +336,14 @@ const Profile = () => {
                             {editMode ? (
                                 <Table.Td className='text-xl'>
                                     <TagsInput 
+                                        {...form.getInputProps("chronicDisease")}
                                         placeholder='Enter chronic diseases separated by comma'
                                         // TODO: Add value binding and change handler
                                     />
                                 </Table.Td>
                             ) : (
                                 <Table.Td className='text-xl'>
-                                    {patient.chronicDisease || "None"}
+                                    {profile.chronicDisease ?? '-'}
                                 </Table.Td>
                             )}
                         </Table.Tr>
@@ -336,7 +380,8 @@ const Profile = () => {
                     
                 </div> */}
             </Modal>
-        </div>
+    
+        </form>
     );
 };
 
